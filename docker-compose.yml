@@ -1,0 +1,22 @@
+version: "2.4"
+
+services:
+  pytorch-dist:
+    # build
+    image: pytorch-dist
+    build:
+      context: .
+
+    # run
+    container_name: pytorch-dist
+    environment:
+      NNODES: 1
+      NODE_RANK: 0
+      NPROC_PER_NODE: 4
+    runtime: nvidia
+    networks:
+      - core
+
+networks:
+  core:
+    driver: bridge
