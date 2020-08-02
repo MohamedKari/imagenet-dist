@@ -1,39 +1,67 @@
 import argparse
 import os
 import sys
+import time
 
-import torch
+from torch import tensor
+from torch.nn import Module, Parameter, MSELoss
+from torch.optim import SGD
+
 import torch.distributed as dist
-import torch.nn as nn
-import torch.optim as optim
-
 from torch.nn.parallel import DistributedDataParallel
 
 
-class ToyModel(nn.Module):
-    def __init__(self):
+class ToyModel(Module):
+    def __init__(self, param_init: float):
         super(ToyModel, self).__init__()
-        self.net1 = nn.Linear(10, 10)
-        self.relu = nn.ReLU()
-        self.net2 = nn.Linear(10, 5)
-
-    def forward(self, x):
-        return self.net2(self.relu(self.net1(x)))
+        print("param_init", param_init)
+        # self.param = Parameter(tensor([param_init])) # pylint: disable=not-callable
+        self.param = Parameter(tensor([param_init])) # pylint: disable=not-callable
+    
+    def forward(self, x: tensor):
+        return self.param * (x ** 2)
+    
+    def log_param(self):
+        print("self.param", self.param)
+        print("self.param.grad", self.param.grad)
 
 
 def train(local_rank):
-    model = ToyModel().cuda(local_rank)
-    ddp_model = DistributedDataParallel(model, [local_rank])
+    x = tensor([float(os.environ["RANK"])]).to(local_rank) # pylint: disable=not-callable
+    y_true = (3. * (x ** 2.)).to(local_rank)
 
-    loss_fn = nn.MSELoss()
-    optimizer = optim.SGD(ddp_model.parameters(), lr=0.001)
+    print(f"local_rank {local_rank}: ", "x", x)
+    print(f"local_rank {local_rank}: ", "y_true", y_true)
+
+    model = ToyModel(2.).to(local_rank)
+    print("Creating model now...")
+    model = DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank)
+    print("model now...")
+    loss_fn = MSELoss()
+    lr = .001
+    optimizer = SGD(model.parameters(), lr=lr)
+
+    # Local only
+    #with model.no_sync():
+    #    y_pred = model(x)
+    #    print(f"local_rank {local_rank}: ", "y_pred", y_pred)
+    #    loss = loss_fn(y_pred, y_true)
+    #    print(f"local_rank {local_rank}: ", "loss", loss)
+    #    loss.backward()
+    #    print(f"local_rank {local_rank}: ", "pre-optimization w", list(model.parameters())[0].data)
+    #    print(f"local_rank {local_rank}: ", "pre-optimization non-synchronized grad_w", list(model.parameters())[0].grad)
+
+    # Now again, but synchronized
+    optimizer.zero_grad()
+    y_pred = model(x)
+    loss = loss_fn(y_pred, y_true)
+    loss.backward()
+    print(f"local_rank {local_rank}: ", "pre-optimization synchronized grad_w", list(model.parameters())[0].grad)
+
+    optimizer.step()
+    print(f"local_rank {local_rank}: ", "post-optimization w", list(model.parameters())[0].data)
 
     optimizer.zero_grad()
-    outputs = ddp_model(torch.randn(20, 10))
-    labels = torch.randn(20, 5).to(local_rank)
-    loss_fn(outputs, labels).backward()
-    optimizer.step()
-    print("my_parameters", list(model.parameters()))
 
 
 def setup(local_rank):
@@ -43,7 +71,7 @@ def setup(local_rank):
         for key in ("MASTER_ADDR", "MASTER_PORT", "RANK", "WORLD_SIZE")
     }
     print(f"[{os.getpid()}] Initializing process group with: {env_dict}")
-    dist.init_process_group(backend="nccl")
+    dist.init_process_group(backend="nccl", init_method="env://")
     
     print(
         f"[PID {os.getpid()}]:"
