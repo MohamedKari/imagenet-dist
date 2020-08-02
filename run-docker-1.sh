@@ -1,0 +1,1 @@
+eval $(docker-machine env mo) && docker-compose run -e NODE_RANK=1 pytorch-dist

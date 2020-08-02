@@ -7,7 +7,6 @@ docker:
 	# docker build -t pytorch-dist .
 	# docker run --runtime=nvidia pytorch-dist 
 	# -it --entrypoint bash
-
 	docker-compose up --build
 
 docker-machine-create:
