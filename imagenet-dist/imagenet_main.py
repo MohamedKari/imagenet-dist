@@ -87,7 +87,13 @@ def main():
     # when using NCCL, on failures, surviving nodes will deadlock on NCCL ops
     # because NCCL uses a spin-lock on the device. Set this env var and
     # to enable a watchdog thread that will destroy stale NCCL communicators
-    os.environ["NCCL_BLOCKING_WAIT"] = "1"
+    print(
+        "MASTER_ADDR: ", os.environ["MASTER_ADDR"], 
+        "MASTER_PORT: ", os.environ["MASTER_PORT"], 
+        "LOCAL_RANK: ", os.environ["LOCAL_RANK"], 
+        "GLOBAL_RANK", os.environ["RANK"], 
+        "NODE_RANK", os.environ["NODE_RANK"], 
+        "WORLD_SIZE", os.environ["WORLD_SIZE"])
 
     dist.init_process_group(
         backend=args.dist_backend, init_method="env://", timeout=timedelta(seconds=10)
