@@ -11,8 +11,8 @@ services:
     # run
     container_name: imagenet-dist
     environment:
-      NNODES: 1
-      NODE_RANK: 0
+      NNODES: 2
+      # NODE_RANK: 0
       NPROC_PER_NODE: 4
       MASTER_ADDR: 172.31.41.157
       MASTER_PORT: 8080
