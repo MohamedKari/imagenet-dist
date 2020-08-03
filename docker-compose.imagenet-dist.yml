@@ -1,0 +1,25 @@
+version: "2.4"
+
+services:
+  imagenet-dist:
+    # build
+    image: imagenet-dist
+    build:
+      dockerfile: imagenet-dist/Dockerfile
+      context: .
+      
+    # run
+    container_name: imagenet-dist
+    environment:
+      NNODES: 1
+      NODE_RANK: 0
+      NPROC_PER_NODE: 4
+      MASTER_ADDR: 172.31.41.157
+      MASTER_PORT: 8080
+    runtime: nvidia
+    ports:
+      - 8080:8080
+    network_mode: host
+    shm_size: 12gb
+    volumes:
+      - /home/ubuntu/share/imagenet-dist/:/share/

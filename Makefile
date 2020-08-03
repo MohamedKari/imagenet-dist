@@ -9,6 +9,9 @@ docker:
 	# -it --entrypoint bash
 	docker-compose up --build
 
+imagenet-dist:
+	bash run-imagenet-dist.sh
+
 docker-machine-create:
 	docker-machine create \
 		--driver amazonec2 \
