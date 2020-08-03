@@ -1,5 +1,5 @@
-mkdir -p ~/share/imagenet-distributed/data/
-cd ~/share/imagenet-distributed/data/
+mkdir -p ~/share/imagenet-dist/data/
+cd ~/share/imagenet-dist/data/
 
 aws s3 sync s3://imagenet-mo/chunked/ILSVRC2012_img_train/ train
 aws s3 sync s3://imagenet-mo/chunked/ILSVRC2012_img_val/ val
