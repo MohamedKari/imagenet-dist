@@ -6,6 +6,7 @@ from torch.nn import Module, Parameter, MSELoss
 from torch.optim import SGD
 
 
+
 class QuadraticModel(Module):
     def __init__(self, param_init: float):
         super(QuadraticModel, self).__init__()
