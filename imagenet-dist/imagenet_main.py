@@ -277,11 +277,11 @@ def load_checkpoint(
 
     # logic below is unnecessary when the checkpoint is visible on all nodes!
     # create a temporary cpu pg to broadcast most up-to-date checkpoint
-    with tmp_process_group(backend="gloo") as pg:
+    with tmp_process_group(backend="nccl") as pg:
         rank = dist.get_rank(group=pg)
 
         # get rank that has the largest state.epoch
-        epochs = torch.zeros(dist.get_world_size(), dtype=torch.int32)
+        epochs = torch.zeros(dist.get_world_size(), dtype=torch.int32, device=f"cuda:{os.environ['LOCAL_RANK']}")
         epochs[rank] = state.epoch
         dist.all_reduce(epochs, op=dist.ReduceOp.SUM, group=pg)
         t_max_epoch, t_max_rank = torch.max(epochs, dim=0)
@@ -302,14 +302,14 @@ def load_checkpoint(
             torch.save(state.capture_snapshot(), f)
             raw_blob = numpy.frombuffer(f.getvalue(), dtype=numpy.uint8)
 
-        blob_len = torch.tensor(len(raw_blob))
+        blob_len = torch.tensor(len(raw_blob), device=f"cuda:{os.environ['LOCAL_RANK']}")
         dist.broadcast(blob_len, src=max_rank, group=pg)
         print(f"=> checkpoint broadcast size is: {blob_len}")
 
         if rank != max_rank:
-            blob = torch.zeros(blob_len.item(), dtype=torch.uint8)
+            blob = torch.zeros(blob_len.item(), dtype=torch.uint8, device=f"cuda:{os.environ['LOCAL_RANK']}")
         else:
-            blob = torch.as_tensor(raw_blob, dtype=torch.uint8)
+            blob = torch.as_tensor(raw_blob, dtype=torch.uint8, device=f"cuda:{os.environ['LOCAL_RANK']}")
 
         dist.broadcast(blob, src=max_rank, group=pg)
         print(f"=> done broadcasting checkpoint")
