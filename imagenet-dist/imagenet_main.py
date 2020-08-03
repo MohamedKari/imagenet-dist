@@ -87,6 +87,8 @@ def main():
     # when using NCCL, on failures, surviving nodes will deadlock on NCCL ops
     # because NCCL uses a spin-lock on the device. Set this env var and
     # to enable a watchdog thread that will destroy stale NCCL communicators
+    # os.environ["NCCL_BLOCKING_WAIT"] = "1"
+
     print(
         "MASTER_ADDR: ", os.environ["MASTER_ADDR"], 
         "MASTER_PORT: ", os.environ["MASTER_PORT"], 
