@@ -17,10 +17,10 @@ ENTRYPOINT python -m torch.distributed.launch \
     --use_env \
     imagenet_main.py \
     --arch resnet18 \
-    --epochs 20 \
+    --epochs 60 \
     --batch-size 32 \
     --workers 4 \
-    --lr 0.2 \
+    --lr 0.1 \
     --print-freq 10 \
     --checkpoint-file /share/checkpoints/checkpoint.pth.tar \
     /share/data
