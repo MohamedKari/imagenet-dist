@@ -4,6 +4,7 @@ eval $(docker-machine env node-2-distributed-training)
 bash image
 bash imagenet-dist/run-imagenet-node-0.sh
 
+#  Behavior of torch.distributed.launch
 ```sh
 python -m torch.distributed.launch \
     --nnodes ${NNODES} \
