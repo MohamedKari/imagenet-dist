@@ -323,8 +323,8 @@ def load_checkpoint(
         print(f"=> done broadcasting checkpoint")
 
         if rank != max_rank:
-            with io.BytesIO(blob.numpy()) as f:
-                snapshot = torch.load(f)
+            with io.BytesIO(blob.cpu().numpy()) as f:
+                snapshot = torch.load(f, map_location=f"cuda:{device_id}")
             state.apply_snapshot(snapshot, device_id)
 
         # wait till everyone has loaded the checkpoint
